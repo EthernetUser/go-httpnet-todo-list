@@ -1,33 +1,36 @@
-package getTasks
+package markAsDeleted
 
 import (
 	"context"
 	"encoding/json"
-	"go-httpnet-todo-list/internal/database"
 	"net/http"
 )
 
 type DB interface {
-	GetTasks(ctx context.Context, userId int) ([]database.Task, error)
+	MarkAsDeleted(ctx context.Context, taskId int, userId int) error
+}
+
+type MarkAsDeletedRequest struct {
+	TaskId int `json:"taskId"`
 }
 
 func New(db DB, authUserIdKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId := r.Context().Value(authUserIdKey).(int)
 
-		tasks, err := db.GetTasks(r.Context(), userId)
+		var req MarkAsDeletedRequest
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		err = db.MarkAsDeleted(r.Context(), req.TaskId, userId)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		jsonResp, err := json.Marshal(tasks)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(jsonResp)
+		w.WriteHeader(http.StatusOK)
 	}
 }

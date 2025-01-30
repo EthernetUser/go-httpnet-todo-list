@@ -21,8 +21,6 @@ type ServerConfig struct {
 	Handler      http.Handler
 }
 
-type Middleware func(next http.Handler) http.Handler
-
 func NewHttpServer(config ServerConfig) HttpServer {
 	return &httpServer{
 		srv: &http.Server{

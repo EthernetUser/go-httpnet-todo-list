@@ -1,11 +1,15 @@
 package main
 
 import (
+	"go-httpnet-todo-list/internal/database/postgres"
+	"go-httpnet-todo-list/internal/handlers/tasks/addTask"
+	"go-httpnet-todo-list/internal/handlers/tasks/getTasks"
+	"go-httpnet-todo-list/internal/handlers/tasks/markAsDeleted"
+	"go-httpnet-todo-list/internal/handlers/tasks/markTask"
 	"go-httpnet-todo-list/internal/httpserver"
 	"go-httpnet-todo-list/internal/middlewares/logging"
 	"go-httpnet-todo-list/internal/router"
 	"log"
-	"net/http"
 	"time"
 )
 
@@ -30,10 +34,9 @@ func main() {
 }
 
 func loadRoutes(r router.Router) {
-	r.Post("/hello", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello world"))
-	})
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
+	db := postgres.New("")
+	r.Get("/get-tasks", getTasks.New(db, "userId"))
+	r.Put("/mark-task", markTask.New(db, "userId"))
+	r.Post("/add-task", addTask.New(db, "userId"))
+	r.Delete("/mark-as-deleted", markAsDeleted.New(db, "userId"))
 }
