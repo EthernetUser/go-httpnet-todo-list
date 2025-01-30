@@ -1,29 +1,35 @@
 package main
 
 import (
+	"go-httpnet-todo-list/internal/config"
+	"go-httpnet-todo-list/internal/consts"
 	"go-httpnet-todo-list/internal/database/postgres"
 	"go-httpnet-todo-list/internal/handlers/tasks/addTask"
 	"go-httpnet-todo-list/internal/handlers/tasks/getTasks"
 	"go-httpnet-todo-list/internal/handlers/tasks/markAsDeleted"
 	"go-httpnet-todo-list/internal/handlers/tasks/markTask"
 	"go-httpnet-todo-list/internal/httpserver"
+	"go-httpnet-todo-list/internal/middlewares/auth"
 	"go-httpnet-todo-list/internal/middlewares/logging"
 	"go-httpnet-todo-list/internal/router"
 	"log"
-	"time"
 )
 
 func main() {
+	cfg := config.New()
 	v1 := router.New()
-	loadRoutes(v1)
+	loadRoutes(v1, cfg)
 
-	middlewareWrapper := router.AddMiddlewares(logging.LoggingMiddleware)
+	middlewareWrapper := router.AddMiddlewares(
+		logging.LoggingMiddleware,
+		auth.AuthMiddleware,
+	)
 
 	srvConfig := httpserver.ServerConfig{
-		Addr:         ":8080",
-		WriteTimeout: 10 * time.Second,
-		ReadTimeout:  10 * time.Second,
-		IdleTimeout:  10 * time.Second,
+		Addr:         cfg.HttpServer.Addr,
+		WriteTimeout: cfg.HttpServer.WriteTimeout,
+		ReadTimeout:  cfg.HttpServer.ReadTimeout,
+		IdleTimeout:  cfg.HttpServer.IdleTimeout,
 		Handler:      middlewareWrapper(v1.GetMux()),
 	}
 	srv := httpserver.NewHttpServer(srvConfig)
@@ -33,10 +39,10 @@ func main() {
 	}
 }
 
-func loadRoutes(r router.Router) {
-	db := postgres.New("")
-	r.Get("/get-tasks", getTasks.New(db, "userId"))
-	r.Put("/mark-task", markTask.New(db, "userId"))
-	r.Post("/add-task", addTask.New(db, "userId"))
-	r.Delete("/mark-as-deleted", markAsDeleted.New(db, "userId"))
+func loadRoutes(r router.Router, cfg *config.Config) {
+	db := postgres.New(cfg.Postgres.ConnString)
+	r.Get("/get-tasks", getTasks.New(db, consts.AuthUserIdKey))
+	r.Put("/mark-task", markTask.New(db, consts.AuthUserIdKey))
+	r.Post("/add-task", addTask.New(db, consts.AuthUserIdKey))
+	r.Delete("/mark-as-deleted", markAsDeleted.New(db, consts.AuthUserIdKey))
 }

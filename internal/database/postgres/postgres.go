@@ -29,6 +29,21 @@ func New(connString string) *postgres {
 		panic(err)
 	}
 
+	_, err = dbpool.Exec(context.Background(), `
+		CREATE TABLE IF NOT EXISTS tasks (
+			id SERIAL PRIMARY KEY,
+			user_id INTEGER NOT NULL,
+			title TEXT NOT NULL,
+			description TEXT,
+			status BOOLEAN NOT NULL DEFAULT false,
+			deleted_at TIMESTAMP,
+			is_deleted BOOLEAN NOT NULL DEFAULT false
+		);
+	`)
+	if err != nil {
+		panic(err)
+	}
+
 	return &postgres{
 		dbpool: dbpool,
 	}
@@ -44,7 +59,7 @@ func (p *postgres) GetTasks(ctx context.Context, userId int) ([]database.Task, e
 		return nil, err
 	}
 
-	rows, err := tx.Query(ctx, "SELECT id, title, description, status FROM tasks WHERE user_id = $1", userId)
+	rows, err := tx.Query(ctx, "SELECT id, title, description, status FROM tasks WHERE user_id = $1 AND is_deleted = false", userId)
 	if err != nil {
 		tx.Rollback(ctx)
 		return nil, err
@@ -80,7 +95,7 @@ func (p *postgres) MarkTask(ctx context.Context, taskId int, userId int, done bo
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "UPDATE tasks SET status = $1 WHERE id = $2 AND user_id = $3", done, taskId, userId)
+	_, err = tx.Exec(ctx, "UPDATE tasks SET status = $1 WHERE id = $2 AND user_id = $3 AND is_deleted = false", done, taskId, userId)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
@@ -100,7 +115,7 @@ func (p *postgres) MarkAsDeleted(ctx context.Context, taskId int, userId int) er
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "UPDATE tasks SET deleted_at = now(), is_deleted = true WHERE id = $1 AND user_id = $2", taskId, userId)
+	_, err = tx.Exec(ctx, "UPDATE tasks SET deleted_at = now(), is_deleted = true WHERE id = $1 AND user_id = $2 AND is_deleted = false", taskId, userId)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
