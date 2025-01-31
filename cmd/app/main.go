@@ -20,7 +20,7 @@ func main() {
 	v1 := router.New()
 	loadRoutes(v1, cfg)
 
-	middlewareWrapper := router.AddMiddlewares(
+	middlewareWrapper := router.CreateMiddlewaresWrapper(
 		logging.LoggingMiddleware,
 		auth.AuthMiddleware,
 	)

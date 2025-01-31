@@ -59,7 +59,7 @@ func (r *router) Delete(pattern string, handler func(w http.ResponseWriter, r *h
 	r.m.HandleFunc(updatedPattern, handler)
 }
 
-func AddMiddlewares(middleware ...Middleware) Middleware {
+func CreateMiddlewaresWrapper(middleware ...Middleware) Middleware {
 	return func(next http.Handler) http.Handler {
 		for _, m := range middleware {
 			next = m(next)
