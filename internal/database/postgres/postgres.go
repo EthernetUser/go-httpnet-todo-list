@@ -11,7 +11,12 @@ type Postgres interface {
 	GetTasks(ctx context.Context, userId int) ([]database.Task, error)
 	MarkTask(ctx context.Context, taskId int, userId int, done bool) error
 	MarkAsDeleted(ctx context.Context, taskId int, userId int) error
-	AddTask(ctx context.Context, userId int, title string, description string) error
+	AddTask(
+		ctx context.Context,
+		userId int,
+		title string,
+		description string,
+	) error
 	Close()
 }
 
@@ -53,13 +58,25 @@ func (p *postgres) Close() {
 	p.dbpool.Close()
 }
 
-func (p *postgres) GetTasks(ctx context.Context, userId int) ([]database.Task, error) {
+func (p *postgres) GetTasks(
+	ctx context.Context,
+	userId int,
+) ([]database.Task, error) {
 	tx, err := p.dbpool.Begin(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := tx.Query(ctx, "SELECT id, title, description, status FROM tasks WHERE user_id = $1 AND is_deleted = false", userId)
+	const queryGetUserTasks = `
+  		SELECT id, title, description, status
+  		FROM tasks
+  		WHERE user_id = $1 AND is_deleted = false
+	`
+	rows, err := tx.Query(
+		ctx,
+		queryGetUserTasks,
+		userId,
+	)
 	if err != nil {
 		tx.Rollback(ctx)
 		return nil, err
@@ -89,13 +106,24 @@ func (p *postgres) GetTasks(ctx context.Context, userId int) ([]database.Task, e
 	return tasks, nil
 }
 
-func (p *postgres) MarkTask(ctx context.Context, taskId int, userId int, done bool) error {
+func (p *postgres) MarkTask(
+	ctx context.Context,
+	taskId int,
+	userId int,
+	done bool,
+) error {
 	tx, err := p.dbpool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "UPDATE tasks SET status = $1 WHERE id = $2 AND user_id = $3 AND is_deleted = false", done, taskId, userId)
+	_, err = tx.Exec(
+		ctx,
+		"UPDATE tasks SET status = $1 WHERE id = $2 AND user_id = $3 AND is_deleted = false",
+		done,
+		taskId,
+		userId,
+	)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
@@ -109,13 +137,22 @@ func (p *postgres) MarkTask(ctx context.Context, taskId int, userId int, done bo
 	return nil
 }
 
-func (p *postgres) MarkAsDeleted(ctx context.Context, taskId int, userId int) error {
+func (p *postgres) MarkAsDeleted(
+	ctx context.Context,
+	taskId int,
+	userId int,
+) error {
 	tx, err := p.dbpool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "UPDATE tasks SET deleted_at = now(), is_deleted = true WHERE id = $1 AND user_id = $2 AND is_deleted = false", taskId, userId)
+	_, err = tx.Exec(
+		ctx,
+		"UPDATE tasks SET deleted_at = now(), is_deleted = true WHERE id = $1 AND user_id = $2 AND is_deleted = false",
+		taskId,
+		userId,
+	)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err
@@ -135,7 +172,13 @@ func (p *postgres) AddTask(ctx context.Context, task database.Task) error {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "INSERT INTO tasks (user_id, title, description) VALUES ($1, $2, $3)", task.UserId, task.Title, task.Description)
+	_, err = tx.Exec(
+		ctx,
+		"INSERT INTO tasks (user_id, title, description) VALUES ($1, $2, $3)",
+		task.UserId,
+		task.Title,
+		task.Description,
+	)
 	if err != nil {
 		tx.Rollback(ctx)
 		return err

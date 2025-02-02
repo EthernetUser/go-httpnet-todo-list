@@ -10,7 +10,7 @@ type HttpServer interface {
 }
 
 type httpServer struct {
-	srv              *http.Server
+	srv *http.Server
 }
 
 type ServerConfig struct {
@@ -36,4 +36,3 @@ func NewHttpServer(config ServerConfig) HttpServer {
 func (s *httpServer) Run() error {
 	return s.srv.ListenAndServe()
 }
-

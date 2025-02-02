@@ -9,8 +9,8 @@ import (
 )
 
 type Config struct {
-	HttpServer    HttpServerConfig
-	Postgres      PostgresConfig
+	HttpServer HttpServerConfig
+	Postgres   PostgresConfig
 }
 
 type HttpServerConfig struct {
@@ -39,7 +39,11 @@ func New() *Config {
 
 	return &Config{
 		HttpServer: HttpServerConfig{
-			Addr:         getEnv("HTTP_SERVER_ADDRESS") + ":" + getEnv("HTTP_SERVER_PORT"),
+			Addr: getEnv(
+				"HTTP_SERVER_ADDRESS",
+			) + ":" + getEnv(
+				"HTTP_SERVER_PORT",
+			),
 			WriteTimeout: parseTimeDurationFromEnv("HTTP_SERVER_WRITE_TIMEOUT"),
 			ReadTimeout:  parseTimeDurationFromEnv("HTTP_SERVER_READ_TIMEOUT"),
 			IdleTimeout:  parseTimeDurationFromEnv("HTTP_SERVER_IDLE_TIMEOUT"),
