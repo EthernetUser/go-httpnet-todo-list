@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Env        string
 	HttpServer HttpServerConfig
 	Postgres   PostgresConfig
 }
@@ -42,9 +43,10 @@ func New() *Config {
 	)
 
 	return &Config{
+		Env: os.Getenv("ENV"),
 		HttpServer: HttpServerConfig{
 			Addr: fmt.Sprintf("%s:%s",
-				getEnv("HTTP_SERVER_ADDR"),
+				getEnv("HTTP_SERVER_ADDRESS"),
 				getEnv("HTTP_SERVER_PORT"),
 			),
 			WriteTimeout: parseTimeDurationFromEnv("HTTP_SERVER_WRITE_TIMEOUT"),

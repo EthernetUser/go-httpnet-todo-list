@@ -13,9 +13,7 @@ type Postgres interface {
 	MarkAsDeleted(ctx context.Context, taskId int, userId int) error
 	AddTask(
 		ctx context.Context,
-		userId int,
-		title string,
-		description string,
+		task database.Task,
 	) error
 	Close()
 }
@@ -24,14 +22,14 @@ type postgres struct {
 	dbpool *pgxpool.Pool
 }
 
-func New(connString string) *postgres {
+func New(connString string) (*postgres, error) {
 	dbpool, err := pgxpool.New(context.Background(), connString)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	if err := dbpool.Ping(context.Background()); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	_, err = dbpool.Exec(context.Background(), `
@@ -46,12 +44,12 @@ func New(connString string) *postgres {
 		);
 	`)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &postgres{
 		dbpool: dbpool,
-	}
+	}, nil
 }
 
 func (p *postgres) Close() {
