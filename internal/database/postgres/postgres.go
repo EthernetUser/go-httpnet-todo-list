@@ -67,14 +67,14 @@ func (p *postgres) GetTasks(
 		return nil, err
 	}
 
-	const queryGetUserTasks = `
+	query := `
   		SELECT id, title, description, status
   		FROM tasks
   		WHERE user_id = $1 AND is_deleted = false
 	`
 	rows, err := tx.Query(
 		ctx,
-		queryGetUserTasks,
+		query,
 		userId,
 	)
 	if err != nil {
@@ -117,9 +117,15 @@ func (p *postgres) MarkTask(
 		return err
 	}
 
+	query := `
+		UPDATE tasks SET status = $1 
+		WHERE id = $2 
+		AND user_id = $3 
+		AND is_deleted = false
+	`
 	_, err = tx.Exec(
 		ctx,
-		"UPDATE tasks SET status = $1 WHERE id = $2 AND user_id = $3 AND is_deleted = false",
+		query,
 		done,
 		taskId,
 		userId,
@@ -147,9 +153,15 @@ func (p *postgres) MarkAsDeleted(
 		return err
 	}
 
+	query := `
+		UPDATE tasks SET deleted_at = now(), is_deleted = true 
+		WHERE id = $1 
+		AND user_id = $2 
+		AND is_deleted = false
+	`
 	_, err = tx.Exec(
 		ctx,
-		"UPDATE tasks SET deleted_at = now(), is_deleted = true WHERE id = $1 AND user_id = $2 AND is_deleted = false",
+		query,
 		taskId,
 		userId,
 	)
@@ -172,9 +184,13 @@ func (p *postgres) AddTask(ctx context.Context, task database.Task) error {
 		return err
 	}
 
+	query := `
+		INSERT INTO tasks (user_id, title, description) 
+		VALUES ($1, $2, $3)
+	`
 	_, err = tx.Exec(
 		ctx,
-		"INSERT INTO tasks (user_id, title, description) VALUES ($1, $2, $3)",
+		query,
 		task.UserId,
 		task.Title,
 		task.Description,
