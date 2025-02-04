@@ -1,4 +1,4 @@
-package auth
+package middlewares
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// TODO: Add middleware to check if user is authenticated

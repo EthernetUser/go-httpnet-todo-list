@@ -9,8 +9,7 @@ import (
 	"go-httpnet-todo-list/internal/handlers/tasks/markAsDeleted"
 	"go-httpnet-todo-list/internal/handlers/tasks/markTask"
 	"go-httpnet-todo-list/internal/httpserver"
-	"go-httpnet-todo-list/internal/middlewares/auth"
-	"go-httpnet-todo-list/internal/middlewares/logging"
+	"go-httpnet-todo-list/internal/middlewares"
 	"go-httpnet-todo-list/internal/router"
 	"log"
 )
@@ -21,8 +20,8 @@ func main() {
 	loadRoutes(v1, cfg)
 
 	middlewareWrapper := router.CreateMiddlewaresWrapper(
-		logging.LoggingMiddleware,
-		auth.AuthMiddleware,
+		middlewares.Logging,
+		middlewares.Auth,
 	)
 
 	srvConfig := httpserver.ServerConfig{
@@ -34,6 +33,7 @@ func main() {
 	}
 	srv := httpserver.NewHttpServer(srvConfig)
 
+	log.Printf("Starting server on %s", cfg.HttpServer.Addr)
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

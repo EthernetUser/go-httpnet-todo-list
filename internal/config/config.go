@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -35,14 +36,16 @@ func New() *Config {
 	postgresPort := getEnv("POSTGRES_PORT")
 	postgresDB := getEnv("POSTGRES_DB")
 
-	postgresConnString := "postgres://" + postgresUser + ":" + postgresPassword + "@" + postgresHost + ":" + postgresPort + "/" + postgresDB
+	postgresConnString := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s",
+		postgresUser, postgresPassword, postgresHost, postgresPort, postgresDB,
+	)
 
 	return &Config{
 		HttpServer: HttpServerConfig{
-			Addr: getEnv(
-				"HTTP_SERVER_ADDRESS",
-			) + ":" + getEnv(
-				"HTTP_SERVER_PORT",
+			Addr: fmt.Sprintf("%s:%s",
+				getEnv("HTTP_SERVER_ADDR"),
+				getEnv("HTTP_SERVER_PORT"),
 			),
 			WriteTimeout: parseTimeDurationFromEnv("HTTP_SERVER_WRITE_TIMEOUT"),
 			ReadTimeout:  parseTimeDurationFromEnv("HTTP_SERVER_READ_TIMEOUT"),
