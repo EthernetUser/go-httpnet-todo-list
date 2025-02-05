@@ -1,5 +1,6 @@
 package consts
 
 const (
-	AuthUserIdKey = "authUserId"
+	AuthUserIdKey   = "authUserId"
+	RequestIdHeader = "X-Request-ID"
 )

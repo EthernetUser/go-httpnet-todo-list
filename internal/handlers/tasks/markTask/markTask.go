@@ -3,6 +3,8 @@ package markTask
 import (
 	"context"
 	"encoding/json"
+	"go-httpnet-todo-list/internal/consts"
+	"log/slog"
 	"net/http"
 )
 
@@ -15,19 +17,29 @@ type MarkTaskRequest struct {
 	Done   bool `json:"done"`
 }
 
-func New(db DB, authUserIdKey string) http.HandlerFunc {
+func New(
+	logger *slog.Logger,
+	db DB,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userId := r.Context().Value(authUserIdKey).(int)
+		const op = "handlers.markTask.New"
+		log := *logger.With(
+			"op", op,
+			"request_id", r.Header.Get(consts.RequestIdHeader),
+		)
 
+		userId := r.Context().Value(consts.AuthUserIdKey).(int)
 		var req MarkTaskRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
+			log.Error(err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		err = db.MarkTask(r.Context(), req.TaskId, userId, req.Done)
 		if err != nil {
+			log.Error(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

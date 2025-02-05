@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"fmt"
+	"go-httpnet-todo-list/internal/consts"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -9,7 +10,7 @@ import (
 
 func RequestId(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		xRequestIDHeader := r.Header.Get("X-Request-ID")
+		xRequestIDHeader := r.Header.Get(consts.RequestIdHeader)
 		if xRequestIDHeader != "" {
 			next.ServeHTTP(w, r)
 			return
@@ -23,7 +24,7 @@ func RequestId(next http.Handler) http.Handler {
 			r.UserAgent(),
 			id,
 		)
-		w.Header().Set("X-Request-ID", requestId)
+		w.Header().Set(consts.RequestIdHeader, requestId)
 		next.ServeHTTP(w, r)
 	})
 }

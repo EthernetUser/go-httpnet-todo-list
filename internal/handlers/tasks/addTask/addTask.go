@@ -3,7 +3,9 @@ package addTask
 import (
 	"context"
 	"encoding/json"
+	"go-httpnet-todo-list/internal/consts"
 	"go-httpnet-todo-list/internal/database"
+	"log/slog"
 	"net/http"
 )
 
@@ -16,13 +18,19 @@ type AddTaskRequest struct {
 	Description string `json:"description"`
 }
 
-func New(db DB, authUserIdKey string) http.HandlerFunc {
+func New(logger *slog.Logger, db DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userId := r.Context().Value(authUserIdKey).(int)
+		const op = "handlers.addTask.New"
+		log := *logger.With(
+			"op", op,
+			"request_id", r.Header.Get(consts.RequestIdHeader),
+		)
 
+		userId := r.Context().Value(consts.AuthUserIdKey).(int)
 		var req AddTaskRequest
 		err := json.NewDecoder(r.Body).Decode(&req)
 		if err != nil {
+			log.Error(err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -34,6 +42,7 @@ func New(db DB, authUserIdKey string) http.HandlerFunc {
 			UserId:      userId,
 		})
 		if err != nil {
+			log.Error(err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}

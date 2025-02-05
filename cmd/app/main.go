@@ -2,7 +2,6 @@ package main
 
 import (
 	"go-httpnet-todo-list/internal/config"
-	"go-httpnet-todo-list/internal/consts"
 	"go-httpnet-todo-list/internal/database/postgres"
 	"go-httpnet-todo-list/internal/handlers/tasks/addTask"
 	"go-httpnet-todo-list/internal/handlers/tasks/getTasks"
@@ -28,7 +27,7 @@ func main() {
 
 	logger.Debug("init router")
 	v1 := router.New()
-	loadRoutes(v1, db)
+	loadRoutes(v1, logger, db)
 
 	logger.Debug("init middlewares")
 	middlewareWrapper := router.CreateMiddlewaresWrapper(
@@ -54,11 +53,14 @@ func main() {
 	}
 }
 
-func loadRoutes(r router.Router, db postgres.Postgres) {
-	r.Get("/get-tasks", getTasks.New(db, consts.AuthUserIdKey))
-	r.Put("/mark-task", markTask.New(db, consts.AuthUserIdKey))
-	r.Post("/add-task", addTask.New(db, consts.AuthUserIdKey))
-	r.Delete("/mark-as-deleted", markAsDeleted.New(db, consts.AuthUserIdKey))
+func loadRoutes(r router.Router, logger *slog.Logger, db postgres.Postgres) {
+	r.Get("/get-tasks", getTasks.New(logger, db))
+	r.Put("/mark-task", markTask.New(logger, db))
+	r.Post("/add-task", addTask.New(logger, db))
+	r.Delete(
+		"/mark-as-deleted",
+		markAsDeleted.New(logger, db),
+	)
 }
 
 func InitLogger(env string) *slog.Logger {
